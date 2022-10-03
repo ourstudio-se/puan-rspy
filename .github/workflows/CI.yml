@@ -10,9 +10,6 @@ jobs:
       name: PyPI
       url: ${{ steps.set_url.outputs.env_url }}
     steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: wheels
       - uses: actions/setup-python@v4
         with:
           python-version: 3.9
@@ -21,9 +18,9 @@ jobs:
           MATURIN_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           pip install maturin
-          maturin upload -u __token__ --skip-existing *
+          maturin upload -u __token__ --skip-existing
       - name: Set environment url
         id: set_url
         run: |
           VERSION=$(echo $GITHUB_REF | sed -e "s#refs/tags/v##g")
-          echo "::set-output name=env_url::https://pypi.org/project/maturin/$VERSION"
+          echo "::set-output name=env_url::https://pypi.org/project/puan-rspy/$VERSION"

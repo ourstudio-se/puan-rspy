@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='puan-rspy',
-    version='0.1.1',
+    version='0.1.3',
     description='Puan Python Rust interface',
     author_email='rikard@ourstudio.se',
     packages=['distutils', 'distutils.command'],

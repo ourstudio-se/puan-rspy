@@ -74,7 +74,7 @@ impl StatementPy {
 
 #[pyclass]
 pub struct TheoryPy {
-    statements: Vec<StatementPy>
+    pub statements: Vec<StatementPy>
 }
 
 #[pymethods]

@@ -2,6 +2,7 @@ use puanrs::*;
 use pyo3::prelude::*;
 
 #[pyclass]
+#[derive(Clone)]
 pub struct GeLineqPy {
     pub bias: i64,
     pub bounds: Vec<(i64,i64)>,
@@ -36,6 +37,48 @@ impl GeLineqPy {
     pub fn indices(&self) -> PyResult<Vec<u32>> {
         return Ok(self.indices.to_vec())
     } 
+
+    pub fn merge_disj(&self, other: GeLineqPy)  -> PyResult<Option<GeLineqPy>> {
+        let result: Option<GeLineq> = GeLineq::merge_disj(
+            &GeLineq {
+                bias: self.bias, 
+                bounds: self.bounds.to_vec(),
+                coeffs: self.coeffs.to_vec(),
+                indices: self.indices.to_vec()
+            },
+            &GeLineq {
+                bias: other.bias, 
+                bounds: other.bounds,
+                coeffs: other.coeffs,
+                indices: other.indices
+            },
+        );
+        return match result {
+            Some(glin) => Ok(Some(GeLineqPy {bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
+            None => Ok(None)
+        }
+    }
+
+    pub fn merge_conj(&self, other: GeLineqPy) -> PyResult<Option<GeLineqPy>> {
+        let result: Option<GeLineq> = GeLineq::merge_conj(
+            &GeLineq {
+                bias: self.bias, 
+                bounds: self.bounds.to_vec(),
+                coeffs: self.coeffs.to_vec(),
+                indices: self.indices.to_vec()
+            },
+            &GeLineq {
+                bias: other.bias, 
+                bounds: other.bounds,
+                coeffs: other.coeffs,
+                indices: other.indices
+            },
+        );
+        return match result {
+            Some(glin) => Ok(Some(GeLineqPy {bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
+            None => Ok(None)
+        }
+    }
 }
 
 #[pyclass]

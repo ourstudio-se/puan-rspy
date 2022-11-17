@@ -6,9 +6,9 @@ use pyo3::prelude::*;
 
 #[pyclass]
 pub struct MatrixPy {
-    val: Vec<f64>,
-    nrows: usize,
-    ncols: usize
+    pub val: Vec<f64>,
+    pub nrows: usize,
+    pub ncols: usize
 }
 
 impl Clone for MatrixPy {
@@ -21,11 +21,59 @@ impl Clone for MatrixPy {
     }
 }
 
+#[pymethods]
+impl MatrixPy {
+
+    #[new]
+    pub fn new(val: Vec<f64>, nrows: usize, ncols: usize) -> MatrixPy {
+        MatrixPy { val, nrows, ncols }
+    }
+
+    #[getter]
+    pub fn val(&self) -> PyResult<Vec<f64>> {
+        return Ok(self.val.to_vec())
+    }
+
+    #[getter]
+    pub fn nrows(&self) -> PyResult<usize> {
+        return Ok(self.nrows)
+    }
+
+    #[getter]
+    pub fn ncols(&self) -> PyResult<usize> {
+        return Ok(self.ncols)
+    }
+}
+
 #[pyclass]
 pub struct IntegerSolutionPy {
     pub x: Vec<i64>,
     pub z: i64,
     pub status_code: usize
+}
+
+#[pymethods]
+impl IntegerSolutionPy {
+
+    #[new]
+    pub fn new(status_code: usize, x: Vec<i64>, z: i64) -> IntegerSolutionPy {
+        IntegerSolutionPy { x, status_code, z }
+    }
+
+    #[getter]
+    pub fn x(&self) -> PyResult<Vec<i64>> {
+        return Ok(self.x.to_vec())
+    }
+
+    #[getter]
+    pub fn z(&self) -> PyResult<i64> {
+        return Ok(self.z)
+    }
+
+    #[getter]
+    pub fn status_code(&self) -> PyResult<usize> {
+        return Ok(self.status_code)
+    }
 }
 
 #[derive(Debug)]
@@ -41,6 +89,25 @@ impl Clone for VariableFloatPy {
             id: self.id, 
             bounds: self.bounds 
         }
+    }
+}
+
+#[pymethods]
+impl VariableFloatPy {
+
+    #[new]
+    pub fn new(id: u32, bounds: (f64, f64)) -> VariableFloatPy {
+        VariableFloatPy { id, bounds }
+    }
+
+    #[getter]
+    pub fn id(&self) -> PyResult<u32> {
+        return Ok(self.id)
+    }
+
+    #[getter]
+    pub fn bounds(&self) -> PyResult<(f64,f64)> {
+        return Ok(self.bounds)
     }
 }
 
@@ -60,14 +127,47 @@ impl Clone for VariablePy {
     }
 }
 
+#[pymethods]
+impl VariablePy {
+
+    #[new]
+    pub fn new(id: u32, bounds: (i64, i64)) -> VariablePy {
+        VariablePy { id, bounds }
+    }
+}
+
 #[pyclass]
 pub struct PolyhedronPy {
     /// The left-hand side of linear constraints on the form $ a + b + c \ge x $.
     pub a: MatrixPy,
     /// The right-hand side of linear constraints as described above.
     pub b: Vec<f64>,
-    /// Upper and lower bounds (`lower_bound`, `upper_bound`) of the variables given by `a`.
+    /// Variables given by `a`.
     pub variables: Vec<VariableFloatPy>
+}
+
+#[pymethods]
+impl PolyhedronPy {
+
+    #[new]
+    pub fn new(a: MatrixPy, b: Vec<f64>, variables: Vec<VariableFloatPy>) -> PolyhedronPy {
+        PolyhedronPy { a, b, variables }
+    }
+
+    #[getter]
+    pub fn a(&self) -> PyResult<MatrixPy> {
+        return Ok(self.a.clone())
+    } 
+
+    #[getter]
+    pub fn b(&self) -> PyResult<Vec<f64>> {
+        return Ok(self.b.to_vec())
+    } 
+
+    #[getter]
+    pub fn variables(&self) -> PyResult<Vec<VariableFloatPy>> {
+        return Ok(self.variables.to_vec())
+    } 
 }
 
 

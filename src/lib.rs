@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use puanrs::*;
+use puanrs::linalg::*;
 use puanrs::polyopt::*;
 use pyo3::prelude::*;
 
@@ -143,15 +144,17 @@ pub struct PolyhedronPy {
     /// The right-hand side of linear constraints as described above.
     pub b: Vec<f64>,
     /// Variables given by `a`.
-    pub variables: Vec<VariableFloatPy>
+    pub variables: Vec<VariableFloatPy>,
+    /// Id on each row
+    pub index: Vec<Option<u32>>
 }
 
 #[pymethods]
 impl PolyhedronPy {
 
     #[new]
-    pub fn new(a: MatrixPy, b: Vec<f64>, variables: Vec<VariableFloatPy>) -> PolyhedronPy {
-        PolyhedronPy { a, b, variables }
+    pub fn new(a: MatrixPy, b: Vec<f64>, variables: Vec<VariableFloatPy>, index: Vec<Option<u32>>) -> PolyhedronPy {
+        PolyhedronPy { a, b, variables, index }
     }
 
     #[getter]
@@ -168,12 +171,45 @@ impl PolyhedronPy {
     pub fn variables(&self) -> PyResult<Vec<VariableFloatPy>> {
         return Ok(self.variables.to_vec())
     } 
+
+    pub fn solve(&self, objectives: Vec<HashMap<u32, f64>>) -> Vec<IntegerSolutionPy> {
+        let polyhedron = Polyhedron {
+            a: Matrix {
+                val: self.a.val.clone(),
+                ncols: self.a.ncols,
+                nrows: self.a.nrows,
+            },
+            b: self.b.clone(),
+            index: self.index.clone(),
+            variables: self.variables.iter().map(|variable| VariableFloat {id: variable.id, bounds: variable.bounds }).collect(),
+        };
+        let _objectives: Vec<Vec<f64>> = objectives.iter().map(|x| {
+            let mut vector = vec![0.0; self.variables.len()];
+            for (k, v) in x.iter() {
+                let pot_index = polyhedron.variables.iter().position(|y| y.id == (*k));
+                if let Some(index) = pot_index {
+                    vector[index] = *v;
+                }
+            }
+            return vector;
+        }).collect();
+        return _objectives.iter().map(|objective| {
+            let ilp = solver::IntegerLinearProgram {
+                ge_ph: polyhedron.to_owned(),
+                eq_ph: Default::default(),
+                of: objective.to_vec(),
+            };
+            let solution = ilp.solve();
+            return IntegerSolutionPy { x: solution.x, z: solution.z, status_code: solution.status_code }
+        }).collect();
+    }
 }
 
 
 #[pyclass]
 #[derive(Clone)]
 pub struct GeLineqPy {
+    pub id: Option<u32>,
     pub bias: i64,
     pub bounds: Vec<(i64,i64)>,
     pub coeffs: Vec<i64>,
@@ -184,9 +220,14 @@ pub struct GeLineqPy {
 impl GeLineqPy {
 
     #[new]
-    pub fn new(bias: i64, bounds: Vec<(i64,i64)>, coeffs: Vec<i64>, indices: Vec<u32>) -> GeLineqPy {
-        return GeLineqPy { bias: bias, bounds: bounds, coeffs: coeffs, indices: indices };
+    pub fn new(id: Option<u32>, bias: i64, bounds: Vec<(i64,i64)>, coeffs: Vec<i64>, indices: Vec<u32>) -> GeLineqPy {
+        return GeLineqPy { id: id, bias: bias, bounds: bounds, coeffs: coeffs, indices: indices };
     }
+
+    #[getter]
+    pub fn id(&self) -> PyResult<Option<u32>> {
+        return Ok(self.id)
+    } 
 
     #[getter]
     pub fn bias(&self) -> PyResult<i64> {
@@ -211,12 +252,14 @@ impl GeLineqPy {
     pub fn merge_disj(&self, other: GeLineqPy)  -> PyResult<Option<GeLineqPy>> {
         let result: Option<GeLineq> = GeLineq::merge_disj(
             &GeLineq {
+                id: self.id,
                 bias: self.bias, 
-                bounds: self.bounds.to_vec(),
-                coeffs: self.coeffs.to_vec(),
-                indices: self.indices.to_vec()
+                bounds: self.bounds.to_owned(),
+                coeffs: self.coeffs.to_owned(),
+                indices: self.indices.to_owned(),
             },
             &GeLineq {
+                id: other.id,
                 bias: other.bias, 
                 bounds: other.bounds,
                 coeffs: other.coeffs,
@@ -224,7 +267,7 @@ impl GeLineqPy {
             },
         );
         return match result {
-            Some(glin) => Ok(Some(GeLineqPy {bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
+            Some(glin) => Ok(Some(GeLineqPy {id: glin.id, bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
             None => Ok(None)
         }
     }
@@ -232,12 +275,14 @@ impl GeLineqPy {
     pub fn merge_conj(&self, other: GeLineqPy) -> PyResult<Option<GeLineqPy>> {
         let result: Option<GeLineq> = GeLineq::merge_conj(
             &GeLineq {
+                id: self.id,
                 bias: self.bias, 
-                bounds: self.bounds.to_vec(),
-                coeffs: self.coeffs.to_vec(),
-                indices: self.indices.to_vec()
+                bounds: self.bounds.to_owned(),
+                coeffs: self.coeffs.to_owned(),
+                indices: self.indices.to_owned()
             },
             &GeLineq {
+                id: other.id,
                 bias: other.bias, 
                 bounds: other.bounds,
                 coeffs: other.coeffs,
@@ -245,7 +290,7 @@ impl GeLineqPy {
             },
         );
         return match result {
-            Some(glin) => Ok(Some(GeLineqPy {bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
+            Some(glin) => Ok(Some(GeLineqPy {id: glin.id, bias: glin.bias, bounds: glin.bounds, coeffs: glin.coeffs, indices: glin.indices})),
             None => Ok(None)
         }
     }
@@ -321,10 +366,11 @@ impl TheoryPy {
     pub fn to_lineqs(&self, active: bool, reduced: bool) -> Vec<GeLineqPy> {
         return _to_theory_helper(&self).to_lineqs(active, reduced).iter().map(|lineq| {
             GeLineqPy {
+                id: lineq.id,
                 bias: lineq.bias,
-                bounds: lineq.bounds.to_vec(),
-                coeffs: lineq.coeffs.to_vec(),
-                indices: lineq.indices.to_vec()
+                bounds: lineq.bounds.to_owned(),
+                coeffs: lineq.coeffs.to_owned(),
+                indices: lineq.indices.to_owned(),
             }
         }).collect()
     }
@@ -338,18 +384,21 @@ impl TheoryPy {
                 nrows: intern_polyhedron.a.nrows,
             }, 
             b: intern_polyhedron.b, 
-            variables: intern_polyhedron.variables.iter().map(|v| VariableFloatPy {id: v.id, bounds: v.bounds}).collect()
+            variables: intern_polyhedron.variables.iter().map(|v| VariableFloatPy {id: v.id, bounds: v.bounds}).collect(),
+            index: intern_polyhedron.index
         }
     }
 
-    pub fn solve(&self, objectives: Vec<HashMap<u32, f64>>) -> Vec<IntegerSolutionPy> {
-        return _to_theory_helper(&self).solve(objectives).into_iter().map(|sol| {
-            IntegerSolutionPy {
-                status_code: sol.status_code,
-                x: sol.x,
-                z: sol.z,
+    pub fn solve(&self, objectives: Vec<HashMap<u32, f64>>, reduce_polyhedron: bool) -> Vec<IntegerSolutionPy> {
+        return _to_theory_helper(&self).solve(objectives, reduce_polyhedron).into_iter().map(
+            |sol| {
+                IntegerSolutionPy {
+                    status_code: sol.status_code,
+                    x: sol.x,
+                    z: sol.z,
+                }
             }
-        }).collect();
+        ).collect();
     }
 }
 

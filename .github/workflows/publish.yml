@@ -9,9 +9,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
+      # - name: Print stuff
+      #   run: ls
+
       - name: Run Docker container to compile into Python package
         uses: docker://ghcr.io/pyo3/maturin
         with:
-          args: >-
-            -v ${{ github.workspace }}:/io
-            build --release
+          build-args: -v $(pwd):/io
+          args: build --release

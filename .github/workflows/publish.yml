@@ -4,7 +4,10 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+        matrix:
+            os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -18,8 +21,8 @@ jobs:
           command: build
           args: --release
 
-      # - name: Run Docker container to compile into Python package
-      #   uses: ghcr.io/pyo3/maturin
-      #   with:
-      #     build-args: -v $(pwd):/io
-      #     args: build --release
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages_dir: target/wheels/

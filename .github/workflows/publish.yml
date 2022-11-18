@@ -24,8 +24,8 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: target/wheels
-          path: dist
+          name: wheels
+          path: target/wheels/
 
   publish:
     runs-on: ubuntu-latest

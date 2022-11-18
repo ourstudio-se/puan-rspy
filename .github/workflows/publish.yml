@@ -9,11 +9,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
-      # - name: Print stuff
-      #   run: ls
-
-      - name: Run Docker container to compile into Python package
-        uses: docker://ghcr.io/pyo3/maturin
+      - uses: dtolnay/rust-toolchain@master
         with:
-          build-args: -v $(pwd):/io
-          args: build --release
+          toolchain: stable
+      - uses: PyO3/maturin-action@v1
+        with:
+          maturin-version: latest
+          command: build
+          args: --release
+
+      # - name: Run Docker container to compile into Python package
+      #   uses: ghcr.io/pyo3/maturin
+      #   with:
+      #     build-args: -v $(pwd):/io
+      #     args: build --release

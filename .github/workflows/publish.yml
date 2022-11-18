@@ -24,7 +24,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: target/wheels
           path: dist
 
   publish:

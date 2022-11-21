@@ -1,7 +1,6 @@
 name: Build and publish
 on:
-  release:
-    types: [published]
+  push
 
 jobs:
   macos-build:
@@ -22,7 +21,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: x86_64
-          args: -i python --release --out dist --sdist
+          args: -i python --release --sdist
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
@@ -44,7 +43,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: -i ${{ matrix.python-version }} --release --out dist
+        args: -i ${{ matrix.python-version }} --release
     - name: Upload wheels
       uses: actions/upload-artifact@v3
       with:

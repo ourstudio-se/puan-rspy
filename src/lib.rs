@@ -300,20 +300,36 @@ impl GeLineqPy {
         }
     }
 }
+#[pyclass]
+#[derive(Clone)]
+pub enum SignPy {
+    Positive,
+    Negative 
+}
+
+impl SignPy{
+    fn convert(&self) -> Sign{
+        return match self {
+            SignPy::Positive => Sign::Positive,
+            SignPy::Negative => Sign::Negative
+        }
+    }
+}
 
 #[pyclass]
 #[derive(Clone)]
 pub struct AtLeastPy {
     ids: Vec<u32>,
-    bias: i64
+    bias: i64,
+    sign: SignPy
 }
 
 #[pymethods]
 impl AtLeastPy {
     
     #[new]
-    pub fn new(ids: Vec<u32>, bias: i64) -> AtLeastPy {
-        return AtLeastPy { ids: ids, bias: bias }
+    pub fn new(ids: Vec<u32>, bias: i64, sign: SignPy) -> AtLeastPy {
+        return AtLeastPy { ids: ids, bias: bias, sign: sign }
     }
 }
 
@@ -344,7 +360,8 @@ fn _to_theory_helper(theory_py: &TheoryPy) -> Theory {
                     Some(a) => Some(
                         AtLeast {
                             bias: a.bias,
-                            ids: a.ids.to_vec()
+                            ids: a.ids.to_vec(),
+                            sign: a.sign.convert()
                         }
                     ),
                     None => None

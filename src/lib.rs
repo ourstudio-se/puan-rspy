@@ -172,6 +172,11 @@ impl PolyhedronPy {
         return Ok(self.variables.to_vec())
     } 
 
+    #[getter]
+    pub fn index(&self) -> PyResult<Vec<Option<u32>>> {
+        return Ok(self.index.to_vec())
+    } 
+
     pub fn solve(&self, objectives: Vec<HashMap<u32, f64>>) -> Vec<IntegerSolutionPy> {
         let polyhedron = Polyhedron {
             a: Matrix {

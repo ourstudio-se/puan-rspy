@@ -375,8 +375,8 @@ impl TheoryPy {
         }).collect()
     }
 
-    pub fn to_polyhedron(&self, active: bool, reduced: bool) -> PolyhedronPy {
-        let intern_polyhedron = _to_theory_helper(&self).to_polyhedron(active, reduced);
+    pub fn to_ge_polyhedron(&self, active: bool, reduced: bool) -> PolyhedronPy {
+        let intern_polyhedron = _to_theory_helper(&self).to_ge_polyhedron(active, reduced);
         return PolyhedronPy { 
             a: MatrixPy {
                 val: intern_polyhedron.a.val,

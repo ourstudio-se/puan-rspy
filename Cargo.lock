@@ -106,7 +106,7 @@ dependencies = [
 
 [[package]]
 name = "puan-rspy"
-version = "0.2.6"
+version = "0.2.7"
 dependencies = [
  "puan-rust",
  "pyo3",

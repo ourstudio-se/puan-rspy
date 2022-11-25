@@ -435,5 +435,6 @@ fn puan_rspy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<StatementPy>()?;
     m.add_class::<AtLeastPy>()?;
     m.add_class::<GeLineqPy>()?;
+    m.add_class::<SignPy>()?;
     Ok(())
 }

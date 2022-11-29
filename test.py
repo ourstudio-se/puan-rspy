@@ -15,5 +15,5 @@ ph = theory.to_ge_polyhedron(True, False)
 for (lineq, _b) in zip(np.array_split(ph.a.val, ph.a.nrows), ph.b):
     print(lineq, _b)
 
-for solution in theory.solve([{3: 1}, {4: 1}, {5: 1}, {6: 1}, {3:1, 4:1}], True):
-    print(solution.x, solution.z, solution.status_code)
+for solution, objective_value, status_code in theory.solve([{3: 1}, {4: 1}, {5: 1}, {6: 1}, {3:1, 4:1}], True):
+    print(solution, objective_value, status_code)

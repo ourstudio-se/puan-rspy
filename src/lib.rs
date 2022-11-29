@@ -5,7 +5,7 @@ use puanrs::linalg::*;
 use puanrs::polyopt::*;
 use pyo3::prelude::*;
 
-#[pyclass]
+#[pyclass(module="Linprog")]
 pub struct MatrixPy {
     pub val: Vec<f64>,
     pub nrows: usize,
@@ -46,7 +46,7 @@ impl MatrixPy {
     }
 }
 
-#[pyclass]
+#[pyclass(module="Linprog")]
 pub struct IntegerSolutionPy {
     pub x: Vec<i64>,
     pub z: i64,
@@ -78,7 +78,7 @@ impl IntegerSolutionPy {
 }
 
 #[derive(Debug)]
-#[pyclass]
+#[pyclass(module="Polyopt")]
 pub struct VariableFloatPy {
     pub id      : u32,
     pub bounds  : (f64, f64)
@@ -113,7 +113,7 @@ impl VariableFloatPy {
 }
 
 #[derive(Debug)]
-#[pyclass]
+#[pyclass(module="Polyopt")]
 pub struct VariablePy {
     pub id      : u32,
     pub bounds  : (i64, i64)
@@ -137,7 +137,7 @@ impl VariablePy {
     }
 }
 
-#[pyclass]
+#[pyclass(module="Linprog")]
 pub struct PolyhedronPy {
     /// The left-hand side of linear constraints on the form $ a + b + c \ge x $.
     pub a: MatrixPy,
@@ -211,7 +211,7 @@ impl PolyhedronPy {
 }
 
 
-#[pyclass]
+#[pyclass(module="Linprog")]
 #[derive(Clone)]
 pub struct GeLineqPy {
     pub id: Option<u32>,
@@ -300,7 +300,7 @@ impl GeLineqPy {
         }
     }
 }
-#[pyclass]
+#[pyclass(module="Theory")]
 #[derive(Clone)]
 pub enum SignPy {
     Positive,
@@ -316,11 +316,14 @@ impl SignPy{
     }
 }
 
-#[pyclass]
+#[pyclass(module="Theory")]
 #[derive(Clone)]
 pub struct AtLeastPy {
+    #[pyo3(get, set)]
     ids: Vec<u32>,
+    #[pyo3(get, set)]
     bias: i64,
+    #[pyo3(get, set)]
     sign: SignPy
 }
 
@@ -333,19 +336,21 @@ impl AtLeastPy {
     }
 }
 
-#[pyclass]
+#[pyclass(module="Theory")]
 #[derive(Clone)]
 pub struct StatementPy {
-    pub variable: Variable,
+    #[pyo3(get, set)]
+    pub variable: VariableFloatPy,
+    #[pyo3(get, set)]
     pub expression: Option<AtLeastPy>
 }
 
 #[pymethods]
 impl StatementPy {
     #[new]
-    pub fn new(id: u32, bounds: (i64,i64), expression: Option<AtLeastPy>) -> StatementPy {
+    pub fn new(id: u32, bounds: (f64, f64), expression: Option<AtLeastPy>) -> StatementPy {
         return StatementPy {
-            variable: Variable { id: id, bounds: bounds },
+            variable: VariableFloatPy { id: id, bounds: bounds },
             expression: expression
         }
     }
@@ -366,14 +371,21 @@ fn _to_theory_helper(theory_py: &TheoryPy) -> Theory {
                     ),
                     None => None
                 },
-                variable: stat.variable
+                variable: Variable { 
+                    id: stat.variable.id, 
+                    bounds: (
+                        stat.variable.bounds.0 as i64, 
+                        stat.variable.bounds.1 as i64
+                    ) 
+                }
             }
         }).collect()
     };
 }
 
-#[pyclass]
+#[pyclass(module="Theory")]
 pub struct TheoryPy {
+    #[pyo3(get, set)]
     pub statements: Vec<StatementPy>
 }
 

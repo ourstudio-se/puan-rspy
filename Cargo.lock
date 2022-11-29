@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "puan-rust"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fbdf6b045eb28e38177d4a505734bd5f9a158475a4960710d1f75cdabf0f81c"
+checksum = "2a7ab9a6edf27704bd83a8bb328d611e4cc8f70b066501f975d7e1862722a548"
 dependencies = [
  "itertools",
 ]

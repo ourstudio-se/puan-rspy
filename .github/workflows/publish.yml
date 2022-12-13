@@ -9,6 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
+        target: [x86_64, arm64]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -21,7 +22,7 @@ jobs:
       - name: Build wheels - x86_64
         uses: PyO3/maturin-action@v1
         with:
-          target: [x86_64, arm64]
+          target: ${{ matrix.target }}
           args: -i python --release --sdist
       - name: Upload wheels
         uses: actions/upload-artifact@v3

@@ -46,7 +46,7 @@ jobs:
       - name: Build wheels - x86_64
         uses: PyO3/maturin-action@v1
         with:
-          target: arm64
+          target: arm64_32-apple-watchos
           args: -i python --release --sdist
       - name: Upload wheels
         uses: actions/upload-artifact@v3

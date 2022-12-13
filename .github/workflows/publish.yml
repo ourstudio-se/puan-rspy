@@ -21,7 +21,7 @@ jobs:
       - name: Build wheels - x86_64
         uses: PyO3/maturin-action@v1
         with:
-          target: x86_64
+          target: [x86_64, arm64]
           args: -i python --release --sdist
       - name: Upload wheels
         uses: actions/upload-artifact@v3

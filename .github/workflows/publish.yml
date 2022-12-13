@@ -30,12 +30,18 @@ jobs:
           path: target/wheels/
 
   macos-build2:
-    runs-on: macos-12
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
     steps:
       - uses: actions/checkout@v3
+      - uses: uraimo/run-on-arch-action@v2
+        name: Run commands
+        id: runcmd
+        with:
+          arch: armv7
+          distro: ubuntu18.04
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}

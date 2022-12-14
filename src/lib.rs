@@ -428,6 +428,11 @@ impl TheoryPy {
     }
 }
 
+#[pyfunction]
+pub fn py_optimized_bit_allocation_64(v: Vec<i64>) -> PyResult<Vec<i64>>{
+    Ok(linalg::optimized_bit_allocation_64(&v))
+}
+
 /// A Python module implemented in Rust.
 #[pymodule]
 fn puan_rspy(_py: Python, m: &PyModule) -> PyResult<()> {
@@ -440,5 +445,6 @@ fn puan_rspy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<AtLeastPy>()?;
     m.add_class::<GeLineqPy>()?;
     m.add_class::<SignPy>()?;
+    m.add_function(wrap_pyfunction!(py_optimized_bit_allocation_64, m)?)?;
     Ok(())
 }

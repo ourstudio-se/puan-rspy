@@ -6,6 +6,56 @@ use puanrs::polyopt::*;
 use pyo3::prelude::*;
 
 #[pyclass(module="Linprog")]
+#[derive(Default, Clone, Debug, PartialEq)]
+pub struct CsrMatrixPy {
+    /// The value for an index `i` in `row` is representing a row index in a virtual matrix
+    pub row: Vec<i64>,
+    /// The value for an index `j` in `col` is representing a column index in a virtual matrix
+    pub col: Vec<i64>,
+    /// The value for an element is the value for the cell (`i`,`j`) in a virtual matrix
+    pub val: Vec<f64>
+}
+
+#[pymethods]
+impl CsrMatrixPy {
+    
+    #[new]
+    pub fn new(row: Vec<i64>, col: Vec<i64>, val: Vec<f64>) -> CsrMatrixPy {
+        CsrMatrixPy { row, col, val }
+    }
+
+    #[getter]
+    pub fn val(&self) -> PyResult<Vec<f64>> {
+        return Ok(self.val.to_vec())
+    }
+
+    #[getter]
+    pub fn row(&self) -> PyResult<Vec<i64>> {
+        return Ok(self.row.clone())
+    }
+
+    #[getter]
+    pub fn col(&self) -> PyResult<Vec<i64>> {
+        return Ok(self.col.clone())
+    }
+
+    pub fn to_matrix(&self) -> MatrixPy {
+        let matrix: Matrix = CsrMatrix {
+            col: self.col.clone(),
+            row: self.row.clone(),
+            val: self.val.clone(),
+        }.to_matrix();
+
+        return MatrixPy {
+            ncols: matrix.ncols,
+            nrows: matrix.nrows,
+            val: matrix.val,
+        }
+    }
+
+}
+
+#[pyclass(module="Linprog")]
 pub struct MatrixPy {
     pub val: Vec<f64>,
     pub nrows: usize,
@@ -136,6 +186,57 @@ impl VariablePy {
         VariablePy { id, bounds }
     }
 }
+
+#[pyclass(module="Linprog")]
+pub struct CsrPolyhedronPy {
+    /// The left-hand side of linear constraints on the form $ a + b + c \ge x $ as a compressed sparse matrix.
+    pub a: CsrMatrixPy,
+    /// The right-hand side of linear constraints as described above.
+    pub b: Vec<f64>,
+    /// Upper and lower bounds (`lower_bound`, `upper_bound`) of the variables given by `a`.
+    pub variables: Vec<VariableFloatPy>,
+    // Index of rows in `a`.
+    pub index: Vec<Option<u32>>
+}
+
+#[pymethods]
+impl CsrPolyhedronPy {
+
+    #[new]
+    pub fn new(a: CsrMatrixPy, b: Vec<f64>, variables: Vec<VariableFloatPy>, index: Vec<Option<u32>>) -> CsrPolyhedronPy {
+        CsrPolyhedronPy { a, b, variables, index }
+    }
+
+    #[getter]
+    pub fn a(&self) -> PyResult<CsrMatrixPy> {
+        return Ok(self.a.clone())
+    } 
+
+    #[getter]
+    pub fn b(&self) -> PyResult<Vec<f64>> {
+        return Ok(self.b.to_vec())
+    } 
+
+    #[getter]
+    pub fn variables(&self) -> PyResult<Vec<VariableFloatPy>> {
+        return Ok(self.variables.to_vec())
+    } 
+
+    #[getter]
+    pub fn index(&self) -> PyResult<Vec<Option<u32>>> {
+        return Ok(self.index.to_vec())
+    }
+
+    pub fn to_dense_polyhedron(&self) -> PolyhedronPy {
+        return PolyhedronPy {
+            a: self.a.to_matrix(),
+            b: self.b.clone(),
+            index: self.index.clone(),
+            variables: self.variables.clone()
+        }
+    }
+}
+
 
 #[pyclass(module="Linprog")]
 pub struct PolyhedronPy {
@@ -409,13 +510,13 @@ impl TheoryPy {
         }).collect()
     }
 
-    pub fn to_ge_polyhedron(&self, active: bool, reduced: bool) -> PolyhedronPy {
+    pub fn to_ge_polyhedron(&self, active: bool, reduced: bool) -> CsrPolyhedronPy {
         let intern_polyhedron = _to_theory_helper(&self).to_ge_polyhedron(active, reduced);
-        return PolyhedronPy { 
-            a: MatrixPy {
+        return CsrPolyhedronPy { 
+            a: CsrMatrixPy {
                 val: intern_polyhedron.a.val,
-                ncols: intern_polyhedron.a.ncols,
-                nrows: intern_polyhedron.a.nrows,
+                col: intern_polyhedron.a.col,
+                row: intern_polyhedron.a.row,
             }, 
             b: intern_polyhedron.b, 
             variables: intern_polyhedron.variables.iter().map(|v| VariableFloatPy {id: v.id, bounds: v.bounds}).collect(),

@@ -106,7 +106,7 @@ dependencies = [
 
 [[package]]
 name = "puan-rspy"
-version = "0.2.10"
+version = "0.3.0"
 dependencies = [
  "puan-rust",
  "pyo3",
@@ -114,9 +114,9 @@ dependencies = [
 
 [[package]]
 name = "puan-rust"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56d2dd9815894e05f22f0dc246ee5ef04f09bd6c1a4c81ce9a485aac4dbfd7b3"
+checksum = "e90fba8a7ce7027c4dcaee6046969eda8aaa9ccd63fbd49cbf96092b28bbf61f"
 dependencies = [
  "itertools",
 ]

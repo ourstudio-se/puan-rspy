@@ -39,6 +39,16 @@ impl CsrMatrixPy {
         return Ok(self.col.clone())
     }
 
+    #[getter]
+    pub fn ncols(&self) -> PyResult<i64> {
+        return Ok(self.col.iter().max().unwrap_or(&0) +1)
+    }
+
+    #[getter]
+    pub fn nrows(&self) -> PyResult<i64> {
+        return Ok(self.row.iter().max().unwrap_or(&0) +1)
+    }
+
     pub fn to_matrix(&self) -> MatrixPy {
         let matrix: Matrix = CsrMatrix {
             col: self.col.clone(),

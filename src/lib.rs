@@ -537,6 +537,10 @@ impl TheoryPy {
     pub fn solve(&self, objectives: Vec<HashMap<u32, f64>>, reduce_polyhedron: bool) -> Vec<(HashMap<u32, i64>, i64, usize)> {
         return _to_theory_helper(&self).solve(objectives, reduce_polyhedron);
     }
+
+    pub fn propagate(&self) -> HashMap<u32, (i64, i64)> {
+        return _to_theory_helper(&self).propagate();
+    }
 }
 
 #[pyfunction]
